@@ -132,12 +132,7 @@ void competition_initialize() {}
  * from where it left off.
  */
 
-
-
-
-
-
-
+ 
 void autonomous() {}
 
 /**
@@ -185,6 +180,9 @@ bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
 // Intake control
 if(r1IsPressed) {
 	Intake.move(127);
+	if(!downIsPressed) {
+		Hopper.move(-127);
+	}
 } else if (r2IsPressed){
 	Intake.move(-127);
 } else {
