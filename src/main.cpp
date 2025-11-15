@@ -164,18 +164,25 @@ void opcontrol() {
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
+		// chassis.arcade(-rightX, -leftY, false, 0.75);
+		int deadzone = 10;
+		if (abs(leftY) < deadzone) leftY = 0;
+		if (abs(rightX) < deadzone) rightX = 0;
 		chassis.arcade(-rightX, -leftY, false, 0.75);
-
 
 static bool r1WasPressed = false;
 static bool r2WasPressed = false;
+static bool downWasPressed = false;
+static bool rightWasPressed = false;
 
 
 
 bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
 bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
+bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
 
-
+// Intake control
 if(r1IsPressed) {
 	Intake.move(127);
 } else if (r2IsPressed){
@@ -184,21 +191,7 @@ if(r1IsPressed) {
 	Intake.move(0);
 }
 
-
-
-r1WasPressed = r1IsPressed;
-r2WasPressed = r2IsPressed;
-
-
-static bool downWasPressed = false;
-static bool rightWasPressed = false;
-
-
-
-bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
-
-
+// Hopper control
 if(downIsPressed) {
 	Hopper.move(127);
 } else if (rightIsPressed){
@@ -209,8 +202,12 @@ if(downIsPressed) {
 
 
 
+r1WasPressed = r1IsPressed;
+r2WasPressed = r2IsPressed;
 downWasPressed = downIsPressed;
 rightWasPressed = rightIsPressed;
+
+
 
         // delay to save resources
         pros::delay(25);
