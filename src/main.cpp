@@ -201,7 +201,7 @@ bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
 
 if(downIsPressed) {
 	Hopper.move(127);
-} else if (downIsPressed){
+} else if (rightIsPressed){
 	Hopper.move(-127);
 } else {
 	Hopper.move(0);
