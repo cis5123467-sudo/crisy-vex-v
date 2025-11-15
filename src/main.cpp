@@ -133,7 +133,47 @@ void competition_initialize() {}
  */
 
  
-void autonomous() {}
+void autonomous() {
+    // Simple timed routine: collect balls on our side.
+    // Sequence:
+    // 1) Start intake and hopper to pick up balls.
+    // 2) Drive forward to sweep the collection zone.
+    // 3) Do a short in-place turn to sweep a bit of the field.
+    // 4) Drive forward again to collect any remaining balls.
+    // 5) Stop drivetrain and intakes.
+
+    // Start intake (inwards) and hopper (feed into storage)
+    Intake.move(127);
+    Hopper.move(-127);
+
+    // Drive forward at 80% for 2.0s to collect front balls
+    leftMotors.move(80);
+    rightMotors.move(80);
+    pros::delay(2000);
+
+    // Brief stop to settle balls
+    leftMotors.move(0);
+    rightMotors.move(0);
+    pros::delay(200);
+
+    // Short in-place turn to the right to sweep a different angle
+    // Left forward, right backward -> turn right
+    leftMotors.move(60);
+    rightMotors.move(-60);
+    pros::delay(600); // adjust duration for desired angle
+
+    // Drive forward again for 1.2s to collect additional balls
+    leftMotors.move(80);
+    rightMotors.move(80);
+    pros::delay(1200);
+
+    // Stop drivetrain and disable intake/hopper after collection
+    leftMotors.move(0);
+    rightMotors.move(0);
+    pros::delay(100);
+    Intake.move(0);
+    Hopper.move(0);
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
