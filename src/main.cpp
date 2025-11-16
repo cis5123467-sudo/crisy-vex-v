@@ -191,7 +191,7 @@ void opcontrol() {
 		static bool r2WasPressed;
 		static bool downWasPressed;
 		static bool rightWasPressed;
-		static bool ywasPressed;
+		static bool xwasPressed;
 		static bool aWasPressed;
 		static bool bWasPressed;
 		
@@ -201,7 +201,7 @@ void opcontrol() {
 		bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
 		bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
 		bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
-		bool yIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
+		bool xIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_X);
 		bool bIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_B);
 		bool aIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_A);
 		bool downPressed = false;
@@ -223,7 +223,7 @@ void opcontrol() {
 			}
 		} else if (aIsPressed){
 			Hopper.move(-127);
-		} else if (yIsPressed){
+		} else if (xIsPressed){
 			Intake.move(127);
 		}
 		// else if (downIsPressed){
@@ -254,7 +254,7 @@ void opcontrol() {
 		rightWasPressed = rightIsPressed;
 		bWasPressed = bIsPressed;
 		aWasPressed = aIsPressed;
-		ywasPressed = yIsPressed;
+		xwasPressed = xIsPressed;
 
 
 
