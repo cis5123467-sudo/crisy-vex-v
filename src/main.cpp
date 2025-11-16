@@ -165,13 +165,14 @@ void opcontrol() {
 		if (abs(rightX) < deadzone) rightX = 0;
 		chassis.arcade(-rightX, -leftY, false, 0.75);
 
-static bool r1WasPressed = false;
-static bool r2WasPressed = false;
-static bool downWasPressed = false;
-static bool rightWasPressed = false;
 
 
+static bool r1WasPressed;
+static bool r2WasPressed;
+static bool downWasPressed;
+static bool rightWasPressed;
 
+// Controller button states
 bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
 bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
 bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
@@ -183,12 +184,11 @@ if(r1IsPressed) {
 	Hopper.move(-127);
 } else if (r2IsPressed){
 	Intake.move(-127);
-	Hopper.move(127);
 } else if(downIsPressed) {
 	Hopper.move(127);
 } else if (rightIsPressed){
 	Hopper.move(-127);
-} else {
+} else{
 	Hopper.move(0);
 	Intake.move(0);
 }
