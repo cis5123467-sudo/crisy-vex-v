@@ -165,45 +165,64 @@ void opcontrol() {
 		if (abs(rightX) < deadzone) rightX = 0;
 		chassis.arcade(-rightX, -leftY, false, 0.75);
 
-static bool r1WasPressed = false;
-static bool r2WasPressed = false;
-static bool downWasPressed = false;
-static bool rightWasPressed = false;
+
+
+		static bool r1WasPressed;
+		static bool r2WasPressed;
+		static bool downWasPressed;
+		static bool rightWasPressed;
+		static bool xwasPressed;
+		static bool aWasPressed;
+		static bool bWasPressed;
+		
+
+		// Controller button states
+		bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
+		bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
+		bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+		bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
+		bool xIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_X);
+		bool bIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_B);
+		bool aIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_A);
+		bool downPressed = false;
+
+
+		// Intake & Hopper control
+		if(r1IsPressed) {
+			Intake.move(127);
+			Hopper.move(-100);
+		} else if (r2IsPressed){
+			Intake.move(-65);
+			if (bIsPressed) {
+				Hopper.move(98);
+			}
+		} else if(bIsPressed) {
+			Hopper.move(98);
+			if (r2IsPressed) {
+				Intake.move(-65);
+			}
+		} else if (aIsPressed){
+			Hopper.move(-127);
+		} else if (xIsPressed){
+			Intake.move(127);
+		}
+		
+		else{
+			Hopper.move(0);
+			Intake.move(0);
+		}
 
 
 
-bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
-bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
-bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
-
-// Intake control
-if(r1IsPressed) {
-	Intake.move(127);
-	if(!downIsPressed) {
-		Hopper.move(-127);
-	}
-} else if (r2IsPressed){
-	Intake.move(-127);
-} else {
-	Intake.move(0);
-}
-
-// Hopper control
-if(downIsPressed) {
-	Hopper.move(127);
-} else if (rightIsPressed){
-	Hopper.move(-127);
-} else {
-	Hopper.move(0);
-}
 
 
-
-r1WasPressed = r1IsPressed;
-r2WasPressed = r2IsPressed;
-downWasPressed = downIsPressed;
-rightWasPressed = rightIsPressed;
+		r1WasPressed = r1IsPressed;
+		r2WasPressed = r2IsPressed;
+		downWasPressed = downIsPressed;
+		rightWasPressed = rightIsPressed;
+		bWasPressed = bIsPressed;
+		aWasPressed = aIsPressed;
+		xwasPressed = xIsPressed;
 
 
 
