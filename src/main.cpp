@@ -214,7 +214,7 @@ void opcontrol() {
 		} else if (r2IsPressed){
 			Intake.move(-65);
 			if (bIsPressed) {
-				Hopper.move(99);
+				Hopper.move(98);
 			}
 		} else if(bIsPressed) {
 			Hopper.move(98);
@@ -262,3 +262,4 @@ void opcontrol() {
         pros::delay(25);
     }
 }
+
