@@ -2,6 +2,7 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/abstract_motor.hpp"
 #include "pros/misc.h"
+#include <cstdint>
 
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -180,11 +181,10 @@ bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
 // Intake control
 if(r1IsPressed) {
 	Intake.move(127);
-	if(!downIsPressed) {
-		Hopper.move(-127);
-	}
+	Hopper.move(-127);
 } else if (r2IsPressed){
 	Intake.move(-127);
+	Intake.move(127);
 } else {
 	Intake.move(0);
 }
