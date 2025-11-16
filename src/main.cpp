@@ -145,8 +145,8 @@ void autonomous() {
 	leftMotors.move(0);
 	rightMotors.move(0);
 	pros::delay(175);
-	leftMotors.move(-20);
-	rightMotors.move(20);
+	leftMotors.move(-10);
+	rightMotors.move(10);
 	
 	// Stop motors
 	pros::delay(2800);
@@ -157,6 +157,9 @@ void autonomous() {
 	// Move backwards and try to line up with lower middle goal
 	leftMotors.move(32);
 	rightMotors.move(-26);
+	pros::delay(1000);
+	Hopper.move(0);
+	Intake.move(0);
 
 }
 
@@ -232,19 +235,7 @@ void opcontrol() {
 		} else if (xIsPressed){
 			Intake.move(127);
 		}
-		// else if (downIsPressed){
-		// 	if (!downPressed){
-		// 		downPressed = true;
-		// 	}else{
-		// 		downPressed=false;
-		// 	}
-		// } 
-		// else if (downPressed){
-		// 	Hopper.move_velocity(127);
-		// }
-		// else if (!downIsPressed){
-		// 	Hopper.move(0);
-		// }
+		
 		else{
 			Hopper.move(0);
 			Intake.move(0);
