@@ -183,7 +183,7 @@ if(r1IsPressed) {
 	Hopper.move(-127);
 } else if (r2IsPressed){
 	Intake.move(-127);
-	Intake.move(127);
+	Hopper.move(127);
 } else {
 	Intake.move(0);
 	Hopper.move(0);
