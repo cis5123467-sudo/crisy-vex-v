@@ -133,7 +133,8 @@ void competition_initialize() {}
  */
 
  
-void autonomous() {}
+void autonomous() {
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -167,38 +168,38 @@ void opcontrol() {
 
 
 
-static bool r1WasPressed;
-static bool r2WasPressed;
-static bool downWasPressed;
-static bool rightWasPressed;
+		static bool r1WasPressed;
+		static bool r2WasPressed;
+		static bool downWasPressed;
+		static bool rightWasPressed;
 
-// Controller button states
-bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
-bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
-bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
+		// Controller button states
+		bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
+		bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
+		bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+		bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
 
-// Intake control
-if(r1IsPressed) {
-	Intake.move(127);
-	Hopper.move(-127);
-} else if (r2IsPressed){
-	Intake.move(-127);
-} else if(downIsPressed) {
-	Hopper.move(127);
-} else if (rightIsPressed){
-	Hopper.move(-127);
-} else{
-	Hopper.move(0);
-	Intake.move(0);
-}
+		// Intake control
+		if(r1IsPressed) {
+			Intake.move(127);
+			Hopper.move(-127);
+		} else if (r2IsPressed){
+			Intake.move(-127);
+		} else if(downIsPressed) {
+			Hopper.move(127);
+		} else if (rightIsPressed){
+			Hopper.move(-127);
+		} else{
+			Hopper.move(0);
+			Intake.move(0);
+		}
 
 
 
-r1WasPressed = r1IsPressed;
-r2WasPressed = r2IsPressed;
-downWasPressed = downIsPressed;
-rightWasPressed = rightIsPressed;
+		r1WasPressed = r1IsPressed;
+		r2WasPressed = r2IsPressed;
+		downWasPressed = downIsPressed;
+		rightWasPressed = rightIsPressed;
 
 
 
