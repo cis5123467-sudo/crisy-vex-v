@@ -13,7 +13,6 @@ pros::MotorGroup rightMotors({3, 4}, pros::MotorGearset::blue); // right motors 
 pros::Motor Intake(-6, pros::MotorGearset::blue);
 pros::Motor Hopper(1, pros::MotorGearset::blue);
 
-
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
                               &rightMotors, // right motor group
@@ -135,45 +134,33 @@ void competition_initialize() {}
 
  
 void autonomous() {
-    // Simple timed routine: collect balls on our side.
-    // Sequence:
-    // 1) Start intake and hopper to pick up balls.
-    // 2) Drive forward to sweep the collection zone.
-    // 3) Do a short in-place turn to sweep a bit of the field.
-    // 4) Drive forward again to collect any remaining balls.
-    // 5) Stop drivetrain and intakes.
+	// Start motors
+	Hopper.move(-100);
+	Intake.move(127);
 
-    // Start intake (inwards) and hopper (feed into storage)
-    Intake.move(127);
-    Hopper.move(-127);
+	// Move forward
+	leftMotors.move(-84);
+	rightMotors.move(74);
+	pros::delay(650);
+	leftMotors.move(0);
+	rightMotors.move(0);
+	pros::delay(175);
+	leftMotors.move(-10);
+	rightMotors.move(10);
+	
+	// Stop motors
+	pros::delay(2800);
+	Hopper.move(0);
+	Intake.move(0);
+	pros::delay(100);
 
-    // Drive forward at 80% for 2.0s to collect front balls
-    leftMotors.move(80);
-    rightMotors.move(80);
-    pros::delay(2000);
+	// Move backwards and try to line up with lower middle goal
+	leftMotors.move(32);
+	rightMotors.move(-26);
+	pros::delay(1000);
+	Hopper.move(0);
+	Intake.move(0);
 
-    // Brief stop to settle balls
-    leftMotors.move(0);
-    rightMotors.move(0);
-    pros::delay(200);
-
-    // Short in-place turn to the right to sweep a different angle
-    // Left forward, right backward -> turn right
-    leftMotors.move(60);
-    rightMotors.move(-60);
-    pros::delay(600); // adjust duration for desired angle
-
-    // Drive forward again for 1.2s to collect additional balls
-    leftMotors.move(80);
-    rightMotors.move(80);
-    pros::delay(1200);
-
-    // Stop drivetrain and disable intake/hopper after collection
-    leftMotors.move(0);
-    rightMotors.move(0);
-    pros::delay(100);
-    Intake.move(0);
-    Hopper.move(0);
 }
 
 /**
@@ -193,6 +180,7 @@ void autonomous() {
 
 
 void opcontrol() {
+	
     // loop forever
     while (true) {
         // get left y and right x positions
@@ -206,45 +194,64 @@ void opcontrol() {
 		if (abs(rightX) < deadzone) rightX = 0;
 		chassis.arcade(-rightX, -leftY, false, 0.75);
 
-static bool r1WasPressed = false;
-static bool r2WasPressed = false;
-static bool downWasPressed = false;
-static bool rightWasPressed = false;
+
+
+		static bool r1WasPressed;
+		static bool r2WasPressed;
+		static bool downWasPressed;
+		static bool rightWasPressed;
+		static bool xwasPressed;
+		static bool aWasPressed;
+		static bool bWasPressed;
+		
+
+		// Controller button states
+		bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
+		bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
+		bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+		bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
+		bool xIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_X);
+		bool bIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_B);
+		bool aIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_A);
+		bool downPressed = false;
+
+
+		// Intake & Hopper control
+		if(r1IsPressed) {
+			Intake.move(127);
+			Hopper.move(-100);
+		} else if (r2IsPressed){
+			Intake.move(-65);
+			if (bIsPressed) {
+				Hopper.move(98);
+			}
+		} else if(bIsPressed) {
+			Hopper.move(98);
+			if (r2IsPressed) {
+				Intake.move(-65);
+			}
+		} else if (aIsPressed){
+			Hopper.move(-127);
+		} else if (xIsPressed){
+			Intake.move(127);
+		}
+		
+		else{
+			Hopper.move(0);
+			Intake.move(0);
+		}
 
 
 
-bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
-bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
-bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
-
-// Intake control
-if(r1IsPressed) {
-	Intake.move(127);
-	if(!downIsPressed) {
-		Hopper.move(-127);
-	}
-} else if (r2IsPressed){
-	Intake.move(-127);
-} else {
-	Intake.move(0);
-}
-
-// Hopper control
-if(downIsPressed) {
-	Hopper.move(127);
-} else if (rightIsPressed){
-	Hopper.move(-127);
-} else {
-	Hopper.move(0);
-}
 
 
-
-r1WasPressed = r1IsPressed;
-r2WasPressed = r2IsPressed;
-downWasPressed = downIsPressed;
-rightWasPressed = rightIsPressed;
+		r1WasPressed = r1IsPressed;
+		r2WasPressed = r2IsPressed;
+		downWasPressed = downIsPressed;
+		rightWasPressed = rightIsPressed;
+		bWasPressed = bIsPressed;
+		aWasPressed = aIsPressed;
+		xwasPressed = xIsPressed;
 
 
 
@@ -252,3 +259,4 @@ rightWasPressed = rightIsPressed;
         pros::delay(25);
     }
 }
+
