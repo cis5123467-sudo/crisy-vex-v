@@ -149,9 +149,15 @@ void autonomous() {
 	rightMotors.move(20);
 	
 	// Stop motors
-	pros::delay(3800);
+	pros::delay(2800);
 	Hopper.move(0);
 	Intake.move(0);
+	pros::delay(100);
+
+	// Move backwards and try to line up with lower middle goal
+	leftMotors.move(32);
+	rightMotors.move(-26);
+
 }
 
 /**
