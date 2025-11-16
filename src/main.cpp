@@ -134,6 +134,24 @@ void competition_initialize() {}
 
  
 void autonomous() {
+	// Start motors
+	Hopper.move(-98);
+	Intake.move(127);
+
+	// Move forward
+	leftMotors.move(-84);
+	rightMotors.move(74);
+	pros::delay(650);
+	leftMotors.move(0);
+	rightMotors.move(0);
+	pros::delay(175);
+	leftMotors.move(-20);
+	rightMotors.move(20);
+	
+	// Stop motors
+	pros::delay(3800);
+	Hopper.move(0);
+	Intake.move(0);
 }
 
 /**
@@ -153,6 +171,7 @@ void autonomous() {
 
 
 void opcontrol() {
+	
     // loop forever
     while (true) {
         // get left y and right x positions
@@ -172,27 +191,60 @@ void opcontrol() {
 		static bool r2WasPressed;
 		static bool downWasPressed;
 		static bool rightWasPressed;
+		static bool ywasPressed;
+		static bool aWasPressed;
+		static bool bWasPressed;
+		
 
 		// Controller button states
 		bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
 		bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
 		bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
 		bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
+		bool yIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
+		bool bIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_B);
+		bool aIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_A);
+		bool downPressed = false;
 
-		// Intake control
+
+		// Intake & Hopper control
 		if(r1IsPressed) {
 			Intake.move(127);
-			Hopper.move(-127);
+			Hopper.move(-100);
 		} else if (r2IsPressed){
-			Intake.move(-127);
-		} else if(downIsPressed) {
-			Hopper.move(127);
-		} else if (rightIsPressed){
+			Intake.move(-65);
+			if (bIsPressed) {
+				Hopper.move(99);
+			}
+		} else if(bIsPressed) {
+			Hopper.move(98);
+			if (r2IsPressed) {
+				Intake.move(-65);
+			}
+		} else if (aIsPressed){
 			Hopper.move(-127);
-		} else{
+		} else if (yIsPressed){
+			Intake.move(127);
+		}
+		// else if (downIsPressed){
+		// 	if (!downPressed){
+		// 		downPressed = true;
+		// 	}else{
+		// 		downPressed=false;
+		// 	}
+		// } 
+		// else if (downPressed){
+		// 	Hopper.move_velocity(127);
+		// }
+		// else if (!downIsPressed){
+		// 	Hopper.move(0);
+		// }
+		else{
 			Hopper.move(0);
 			Intake.move(0);
 		}
+
+
 
 
 
@@ -200,6 +252,9 @@ void opcontrol() {
 		r2WasPressed = r2IsPressed;
 		downWasPressed = downIsPressed;
 		rightWasPressed = rightIsPressed;
+		bWasPressed = bIsPressed;
+		aWasPressed = aIsPressed;
+		ywasPressed = yIsPressed;
 
 
 
