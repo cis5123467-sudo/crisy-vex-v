@@ -2,7 +2,6 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/abstract_motor.hpp"
 #include "pros/misc.h"
-#include <cstdint>
 
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
