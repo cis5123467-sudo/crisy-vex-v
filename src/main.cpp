@@ -187,6 +187,7 @@ if(r1IsPressed) {
 	Intake.move(127);
 } else {
 	Intake.move(0);
+	Hopper.move(0);
 }
 
 // // Hopper control
