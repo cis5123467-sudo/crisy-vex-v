@@ -135,7 +135,7 @@ void competition_initialize() {}
  
 void autonomous() {
 	// Start motors
-	Hopper.move(-98);
+	Hopper.move(-100);
 	Intake.move(127);
 
 	// Move forward
