@@ -198,9 +198,12 @@ void opcontrol() {
 
 		static bool r1WasPressed;
 		static bool r2WasPressed;
+		static bool upWasPressed;
 		static bool downWasPressed;
+		static bool leftWasPressed;
 		static bool rightWasPressed;
-		static bool xwasPressed;
+		static bool xWasPressed;
+		static bool yWasPressed;
 		static bool aWasPressed;
 		static bool bWasPressed;
 		
@@ -208,12 +211,14 @@ void opcontrol() {
 		// Controller button states
 		bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
 		bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
+		bool upIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
 		bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+		bool leftIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT);
 		bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
 		bool xIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_X);
+		bool yIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
 		bool bIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_B);
 		bool aIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_A);
-		bool downPressed = false;
 
 
 		// Intake & Hopper control
@@ -241,7 +246,10 @@ void opcontrol() {
 			Intake.move(0);
 		}
 
-
+		//autonomous trigger for testing
+		if(downIsPressed && !downWasPressed) {
+			autonomous();
+		}
 
 
 
@@ -251,7 +259,8 @@ void opcontrol() {
 		rightWasPressed = rightIsPressed;
 		bWasPressed = bIsPressed;
 		aWasPressed = aIsPressed;
-		xwasPressed = xIsPressed;
+		xWasPressed = xIsPressed;
+		yWasPressed = yIsPressed;
 
 
 
