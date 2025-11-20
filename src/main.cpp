@@ -133,7 +133,35 @@ void competition_initialize() {}
  */
 
  
-void autonomous() {}
+void autonomous() {
+	// Start motors
+	Hopper.move(-100);
+	Intake.move(127);
+
+	// Move forward
+	leftMotors.move(-84);
+	rightMotors.move(74);
+	pros::delay(650);
+	leftMotors.move(0);
+	rightMotors.move(0);
+	pros::delay(175);
+	leftMotors.move(-10);
+	rightMotors.move(10);
+	
+	// Stop motors
+	pros::delay(2800);
+	Hopper.move(0);
+	Intake.move(0);
+	pros::delay(100);
+
+	// Move backwards and try to line up with lower middle goal
+	leftMotors.move(32);
+	rightMotors.move(-26);
+	pros::delay(1000);
+	Hopper.move(0);
+	Intake.move(0);
+
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -152,6 +180,7 @@ void autonomous() {}
 
 
 void opcontrol() {
+	
     // loop forever
     while (true) {
         // get left y and right x positions
@@ -169,9 +198,12 @@ void opcontrol() {
 
 		static bool r1WasPressed;
 		static bool r2WasPressed;
+		static bool upWasPressed;
 		static bool downWasPressed;
+		static bool leftWasPressed;
 		static bool rightWasPressed;
-		static bool xwasPressed;
+		static bool xWasPressed;
+		static bool yWasPressed;
 		static bool aWasPressed;
 		static bool bWasPressed;
 		
@@ -179,12 +211,14 @@ void opcontrol() {
 		// Controller button states
 		bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
 		bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
+		bool upIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
 		bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+		bool leftIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT);
 		bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
 		bool xIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_X);
+		bool yIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
 		bool bIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_B);
 		bool aIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_A);
-		bool downPressed = false;
 
 
 		// Intake & Hopper control
@@ -212,7 +246,10 @@ void opcontrol() {
 			Intake.move(0);
 		}
 
-
+		//autonomous trigger for testing
+		if(downIsPressed && !downWasPressed) {
+			autonomous();
+		}
 
 
 
@@ -222,7 +259,8 @@ void opcontrol() {
 		rightWasPressed = rightIsPressed;
 		bWasPressed = bIsPressed;
 		aWasPressed = aIsPressed;
-		xwasPressed = xIsPressed;
+		xWasPressed = xIsPressed;
+		yWasPressed = yIsPressed;
 
 
 
@@ -230,3 +268,4 @@ void opcontrol() {
         pros::delay(25);
     }
 }
+
