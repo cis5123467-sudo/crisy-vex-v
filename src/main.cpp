@@ -160,6 +160,8 @@ void autonomous() {
 	pros::delay(1000);
 	Hopper.move(0);
 	Intake.move(0);
+	leftMotors.move(0);
+	rightMotors.move(0);
 
 }
 
@@ -253,7 +255,6 @@ void opcontrol() {
 
 
 
-		r1WasPressed = r1IsPressed;
 		r2WasPressed = r2IsPressed;
 		downWasPressed = downIsPressed;
 		rightWasPressed = rightIsPressed;
