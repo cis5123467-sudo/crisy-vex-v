@@ -7,8 +7,8 @@
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
-pros::MotorGroup leftMotors({5, 2}, pros::MotorGearset::blue); // left motors use 600 RPM cartridges
-pros::MotorGroup rightMotors({3, 4}, pros::MotorGearset::blue); // right motors use 600 RPM cartridges
+pros::MotorGroup leftMotors({1, 2, 3}, pros::MotorGearset::blue); // left motors use 600 RPM cartridges
+pros::MotorGroup rightMotors({4, 5, 6}, pros::MotorGearset::blue); // right motors use 600 RPM cartridges
 
 pros::Motor Intake(-6, pros::MotorGearset::blue);
 pros::Motor Hopper(1, pros::MotorGearset::blue);
