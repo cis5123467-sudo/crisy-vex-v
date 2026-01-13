@@ -10,8 +10,7 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup leftMotors({1, 2, 3}, pros::MotorGearset::blue); // left motors use 600 RPM cartridges
 pros::MotorGroup rightMotors({4, 5, 6}, pros::MotorGearset::blue); // right motors use 600 RPM cartridges
 
-pros::Motor Intake(-6, pros::MotorGearset::blue);
-pros::Motor Hopper(1, pros::MotorGearset::blue);
+pros::MotorGroup Intake({11, 12}, pros::MotorGearset::blue); // All intake motors
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
@@ -135,7 +134,6 @@ void competition_initialize() {}
  
 void autonomous() {
 	// Start motors
-	Hopper.move(-100);
 	Intake.move(127);
 
 	// Move forward
@@ -150,7 +148,7 @@ void autonomous() {
 	
 	// Stop motors
 	pros::delay(2800);
-	Hopper.move(0);
+
 	Intake.move(0);
 	pros::delay(100);
 
@@ -158,7 +156,7 @@ void autonomous() {
 	leftMotors.move(32);
 	rightMotors.move(-26);
 	pros::delay(1000);
-	Hopper.move(0);
+
 	Intake.move(0);
 	leftMotors.move(0);
 	rightMotors.move(0);
@@ -194,7 +192,7 @@ void opcontrol() {
 		int deadzone = 10;
 		if (abs(leftY) < deadzone) leftY = 0;
 		if (abs(rightX) < deadzone) rightX = 0;
-		chassis.arcade(-rightX, -leftY, false, 0.75);
+		chassis.arcade(rightX, leftY, false, 0.75);
 
 
 
@@ -226,25 +224,10 @@ void opcontrol() {
 		// Intake & Hopper control
 		if(r1IsPressed) {
 			Intake.move(127);
-			Hopper.move(-100);
 		} else if (r2IsPressed){
 			Intake.move(-65);
-			if (bIsPressed) {
-				Hopper.move(98);
-			}
-		} else if(bIsPressed) {
-			Hopper.move(98);
-			if (r2IsPressed) {
-				Intake.move(-65);
-			}
-		} else if (aIsPressed){
-			Hopper.move(-127);
-		} else if (xIsPressed){
-			Intake.move(127);
 		}
-		
 		else{
-			Hopper.move(0);
 			Intake.move(0);
 		}
 
@@ -257,7 +240,9 @@ void opcontrol() {
 
 		r2WasPressed = r2IsPressed;
 		downWasPressed = downIsPressed;
+		leftWasPressed = leftIsPressed;
 		rightWasPressed = rightIsPressed;
+		upWasPressed = upIsPressed;
 		bWasPressed = bIsPressed;
 		aWasPressed = aIsPressed;
 		xWasPressed = xIsPressed;
