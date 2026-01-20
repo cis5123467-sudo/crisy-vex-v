@@ -2,6 +2,7 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/abstract_motor.hpp"
 #include "pros/misc.h"
+#include "pros/rtos.hpp"
 
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -53,15 +54,15 @@ lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
 );
 
 // input curve for throttle input during driver control
-lemlib::ExpoDriveCurve throttle_curve(3, // joystick deadband out of 127
+lemlib::ExpoDriveCurve throttle_curve(10, // joystick deadband out of 127
                                      10, // minimum output where drivetrain will move out of 127
-                                     1.019 // expo curve gain
+                                     1.203 // expo curve gain
 );
 
 // input curve for steer input during driver control
-lemlib::ExpoDriveCurve steer_curve(3, // joystick deadband out of 127
+lemlib::ExpoDriveCurve steer_curve(10, // joystick deadband out of 127
                                   10, // minimum output where drivetrain will move out of 127
-                                  1.019 // expo curve gain
+                                  0.797 // expo curve gain
 );
 
 // create the chassis
@@ -144,16 +145,27 @@ void competition_initialize() {}
  * from where it left off.
  */
 
+ ASSET(testPath_txt);
  
 void autonomous() {
-	// Will be coded once robot is finished 
+	// Will be coded properly once robot is finished 
 	// Currently this is all previsonary code
-	Intake.move(127);
-	chassis.moveToPoint(0, 14, 1000);
-	chassis.turnToHeading(120,200);
-	chassis.moveToPoint(0, 10``, 1000);
 
-	
+	Intake.move(127);
+	// chassis.moveToPoint(0, 14, 1000);
+	// chassis.turnToHeading(-120,400);
+	// chassis.moveToPoint(0, 46, 600);
+	// chassis.turnToHeading(-180, 400);
+	// chassis.moveToPoint(0, 6, 1000);
+
+	// set chassis pose
+    chassis.setPose(0, 0, 0);
+    // lookahead distance: 15 inches
+    // timeout: 2000 ms
+    chassis.follow(testPath_txt, 15, 2000);
+
+	pros::delay(3000);	
+	Intake.move(0);
 }
 
 /**
