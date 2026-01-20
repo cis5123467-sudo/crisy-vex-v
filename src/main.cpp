@@ -7,17 +7,17 @@
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
-pros::MotorGroup leftMotors({1, 2, 3}, pros::MotorGearset::blue); // left motors use 600 RPM cartridges
-pros::MotorGroup rightMotors({4, 5, 6}, pros::MotorGearset::blue); // right motors use 600 RPM cartridges
+pros::MotorGroup leftMotors({1, -2, 3}, pros::MotorGearset::blue); // left motors use 600 RPM cartridges
+pros::MotorGroup rightMotors({-4, 5, -6}, pros::MotorGearset::blue); // right motors use 600 RPM cartridges
 
-pros::MotorGroup Intake({11, 12}, pros::MotorGearset::blue); // All intake motors
+pros::MotorGroup Intake({-10, 11, 12}, pros::MotorGearset::blue); // All intake motors
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
                               &rightMotors, // right motor group
                               12, // 15 inch track width (for now)
                               lemlib::Omniwheel::NEW_325, // using new 3.25" omnis
-                              360, // drivetrain rpm is 600
+                              360, // drivetrain rpm is 360
                               2 // horizontal drift is 2 (for now)
 );
 
@@ -52,12 +52,25 @@ lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               0 // maximum acceleration (slew)
 );
 
+// input curve for throttle input during driver control
+lemlib::ExpoDriveCurve throttle_curve(3, // joystick deadband out of 127
+                                     10, // minimum output where drivetrain will move out of 127
+                                     1.019 // expo curve gain
+);
+
+// input curve for steer input during driver control
+lemlib::ExpoDriveCurve steer_curve(3, // joystick deadband out of 127
+                                  10, // minimum output where drivetrain will move out of 127
+                                  1.019 // expo curve gain
+);
 
 // create the chassis
 lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         lateral_controller, // lateral PID settings
                         angular_controller, // angular PID settings
-                        sensors // odometry sensors
+                        sensors, // odometry sensors
+                        &throttle_curve, 
+                        &steer_curve
 );
 
 
@@ -133,34 +146,14 @@ void competition_initialize() {}
 
  
 void autonomous() {
-	// Start motors
+	// Will be coded once robot is finished 
+	// Currently this is all previsonary code
 	Intake.move(127);
+	chassis.moveToPoint(0, 14, 1000);
+	chassis.turnToHeading(120,200);
+	chassis.moveToPoint(0, 10``, 1000);
 
-	// Move forward
-	leftMotors.move(-84);
-	rightMotors.move(74);
-	pros::delay(650);
-	leftMotors.move(0);
-	rightMotors.move(0);
-	pros::delay(175);
-	leftMotors.move(-10);
-	rightMotors.move(10);
 	
-	// Stop motors
-	pros::delay(2800);
-
-	Intake.move(0);
-	pros::delay(100);
-
-	// Move backwards and try to line up with lower middle goal
-	leftMotors.move(32);
-	rightMotors.move(-26);
-	pros::delay(1000);
-
-	Intake.move(0);
-	leftMotors.move(0);
-	rightMotors.move(0);
-
 }
 
 /**
@@ -188,11 +181,10 @@ void opcontrol() {
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
-		// chassis.arcade(-rightX, -leftY, false, 0.75);
 		int deadzone = 10;
 		if (abs(leftY) < deadzone) leftY = 0;
 		if (abs(rightX) < deadzone) rightX = 0;
-		chassis.arcade(rightX, leftY, false, 0.75);
+		chassis.arcade(leftY, -rightX, false, 0.75);
 
 
 
@@ -225,16 +217,12 @@ void opcontrol() {
 		if(r1IsPressed) {
 			Intake.move(127);
 		} else if (r2IsPressed){
-			Intake.move(-65);
+			Intake.move(-127);
 		}
 		else{
 			Intake.move(0);
 		}
 
-		//autonomous trigger for testing
-		if(downIsPressed && !downWasPressed) {
-			autonomous();
-		}
 
 
 
