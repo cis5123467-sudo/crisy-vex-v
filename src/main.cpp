@@ -4,6 +4,8 @@
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
 
+// variable to select autonomous
+int auton = 1; // 0 = basicRight, 1 = basicLeft
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
@@ -145,27 +147,47 @@ void competition_initialize() {}
  * from where it left off.
  */
 
- ASSET(testPath_txt);
- 
+
+ASSET(basicRight_txt); // Pure Pursuit path asset
+ASSET(basicLeft_txt); // Pure Pursuit path asset
+ASSET(movebacktohoopleft_txt); // Pure Pursuit path asset
+
 void autonomous() {
-	// Will be coded properly once robot is finished 
-	// Currently this is all previsonary code
 
-	Intake.move(127);
-	// chassis.moveToPoint(0, 14, 1000);
-	// chassis.turnToHeading(-120,400);
-	// chassis.moveToPoint(0, 46, 600);
-	// chassis.turnToHeading(-180, 400);
-	// chassis.moveToPoint(0, 6, 1000);
+	if (auton == 0){ // start on the right side
+		// Will be coded properly once robot is finished 
+		// Currently this is all previsonary code
 
-	// set chassis pose
-    chassis.setPose(0, 0, 0);
-    // lookahead distance: 15 inches
-    // timeout: 2000 ms
-    chassis.follow(testPath_txt, 15, 2000);
+		Intake.move(127);
 
-	pros::delay(3000);	
-	Intake.move(0);
+		// set chassis pose
+   		chassis.setPose(0, 0, 0);
+    	// lookahead distance: 15 inches
+    	// timeout: 2000 ms
+    	chassis.follow(basicRight_txt, 15, 2000);
+
+		pros::delay(3000);	
+		Intake.move(0);
+	}
+
+	if (auton == 1){ // start on the left side
+		// Will be coded properly once robot is finished 
+		// Currently this is all previsonary code
+
+		Intake.move(127);
+
+		// set chassis pose
+    	chassis.setPose(0, 0, 0);
+    	// lookahead distance: 15 inches
+    	// timeout: 2000 ms
+    	chassis.follow(basicLeft_txt, 15, 1000);
+		Intake.move(0);
+		chassis.follow(movebacktohoopleft_txt, 15, 100);
+		Intake.move(127);
+
+		pros::delay(3000);	
+		Intake.move(0);
+	}
 }
 
 /**
