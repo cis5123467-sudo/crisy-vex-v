@@ -7,7 +7,7 @@
 #include "pros/rtos.hpp"
 
 // variable to select autonomous
-int auton = 0; // 0 = basicRight, 1 = basicLeft
+int auton = 0; 
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
@@ -18,12 +18,12 @@ pros::MotorGroup rightMotors({-7, 5, -6}, pros::MotorGearset::blue); // right mo
 pros::MotorGroup Intake({11}, pros::MotorGearset::blue); // All intake motors
 pros::MotorGroup Output({-10}, pros::MotorGearset::blue); // All output motors
 
-pros::Motor m1(1, pros::MotorGearset::blue);
-pros::Motor m2(-2, pros::MotorGearset::blue);
-pros::Motor m3(3, pros::MotorGearset::blue);
-pros::Motor m4(-7, pros::MotorGearset::blue);
-pros::Motor m5(5, pros::MotorGearset::blue);
-pros::Motor m6(-6, pros::MotorGearset::blue);
+pros::Motor l1(1, pros::MotorGearset::blue);
+pros::Motor l2(-2, pros::MotorGearset::blue);
+pros::Motor l3(3, pros::MotorGearset::blue);
+pros::Motor r1(-7, pros::MotorGearset::blue);
+pros::Motor r2(5, pros::MotorGearset::blue);
+pros::Motor r3(-6, pros::MotorGearset::blue);
 
 // Pneumatics
 pros::adi::Pneumatics Sweeper('a', false);
@@ -175,17 +175,14 @@ void autonomous() {
 		Intake.move(127);
 		Sweeper.retract();
 
-		// set chassis pose
+
    		chassis.setPose(0, 0, 0);
-    	// lookahead distance: 15 inches
-    	// timeout: 2000 ms
-    	// chassis.follow(basicRight_txt, 15, 2000);
 		chassis.moveToPoint(0, 30, 1000);
 		chassis.turnToHeading(-90, 1000);
 		Sweeper.extend();
 		pros::delay(1000);
 		chassis.moveToPoint(0, 32, 1000);
-		chassis.moveToPoint(0, 28, 1000);
+		chassis.moveToPoint(0, 28, 500);
 		Output.move(127);
 		Sweeper.retract();
 		pros::delay(3000);
