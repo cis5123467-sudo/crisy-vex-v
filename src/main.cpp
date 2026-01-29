@@ -1,19 +1,32 @@
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/abstract_motor.hpp"
+#include "pros/adi.hpp"
 #include "pros/misc.h"
+#include "pros/motors.hpp"
 #include "pros/rtos.hpp"
 
 // variable to select autonomous
-int auton = 1; // 0 = basicRight, 1 = basicLeft
+int auton = 0; // 0 = basicRight, 1 = basicLeft
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
 // Motors
+pros::MotorGroup Drivebase({1, -2, 3, -7, 5, -6}, pros::MotorGearset::blue); // all drivetrain motors
 pros::MotorGroup leftMotors({1, -2, 3}, pros::MotorGearset::blue); // left motors use 600 RPM cartridges
-pros::MotorGroup rightMotors({-4, 5, -6}, pros::MotorGearset::blue); // right motors use 600 RPM cartridges
+pros::MotorGroup rightMotors({-7, 5, -6}, pros::MotorGearset::blue); // right motors use 600 RPM cartridges
+pros::MotorGroup Intake({11}, pros::MotorGearset::blue); // All intake motors
+pros::MotorGroup Output({-10}, pros::MotorGearset::blue); // All output motors
 
-pros::MotorGroup Intake({-10, 11, 12}, pros::MotorGearset::blue); // All intake motors
+pros::Motor m1(1, pros::MotorGearset::blue);
+pros::Motor m2(-2, pros::MotorGearset::blue);
+pros::Motor m3(3, pros::MotorGearset::blue);
+pros::Motor m4(-7, pros::MotorGearset::blue);
+pros::Motor m5(5, pros::MotorGearset::blue);
+pros::Motor m6(-6, pros::MotorGearset::blue);
+
+// Pneumatics
+pros::adi::Pneumatics Sweeper('a', false);
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
@@ -56,15 +69,15 @@ lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
 );
 
 // input curve for throttle input during driver control
-lemlib::ExpoDriveCurve throttle_curve(10, // joystick deadband out of 127
+lemlib::ExpoDriveCurve throttle_curve(3, // joystick deadband out of 127
                                      10, // minimum output where drivetrain will move out of 127
-                                     1.203 // expo curve gain
+                                     1 // expo curve gain
 );
 
 // input curve for steer input during driver control
-lemlib::ExpoDriveCurve steer_curve(10, // joystick deadband out of 127
+lemlib::ExpoDriveCurve steer_curve(3, // joystick deadband out of 127
                                   10, // minimum output where drivetrain will move out of 127
-                                  0.797 // expo curve gain
+                                  1 // expo curve gain
 );
 
 // create the chassis
@@ -157,37 +170,47 @@ void autonomous() {
 	if (auton == 0){ // start on the right side
 		// Will be coded properly once robot is finished 
 		// Currently this is all previsonary code
-
+		Sweeper.extend();
+		pros::delay(200);
 		Intake.move(127);
+		Sweeper.retract();
 
 		// set chassis pose
    		chassis.setPose(0, 0, 0);
     	// lookahead distance: 15 inches
     	// timeout: 2000 ms
-    	chassis.follow(basicRight_txt, 15, 2000);
-
-		pros::delay(3000);	
+    	// chassis.follow(basicRight_txt, 15, 2000);
+		chassis.moveToPoint(0, 30, 1000);
+		chassis.turnToHeading(-90, 1000);
+		Sweeper.extend();
+		pros::delay(1000);
+		chassis.moveToPoint(0, 32, 1000);
+		chassis.moveToPoint(0, 28, 1000);
+		Output.move(127);
+		Sweeper.retract();
+		pros::delay(3000);
 		Intake.move(0);
+		Output.move(0);
 	}
 
-	if (auton == 1){ // start on the left side
-		// Will be coded properly once robot is finished 
-		// Currently this is all previsonary code
+	// if (auton == 1){ // start on the left side
+	// 	// Will be coded properly once robot is finished 
+	// 	// Currently this is all previsonary code
 
-		Intake.move(127);
+	// 	Intake.move(127);
 
-		// set chassis pose
-    	chassis.setPose(0, 0, 0);
-    	// lookahead distance: 15 inches
-    	// timeout: 2000 ms
-    	chassis.follow(basicLeft_txt, 15, 1000);
-		Intake.move(0);
-		chassis.follow(movebacktohoopleft_txt, 15, 100);
-		Intake.move(127);
+	// 	// set chassis pose
+    // 	chassis.setPose(0, 0, 0);
+    // 	// lookahead distance: 15 inches
+    // 	// timeout: 2000 ms
+    // 	chassis.follow(basicLeft_txt, 15, 1000);
+	// 	Intake.move(0);
+	// 	chassis.follow(movebacktohoopleft_txt, 15, 100);
+	// 	Intake.move(127);
 
-		pros::delay(3000);	
-		Intake.move(0);
-	}
+	// 	pros::delay(3000);	
+	// 	Intake.move(0);
+	// }
 }
 
 /**
@@ -232,6 +255,7 @@ void opcontrol() {
 		static bool yWasPressed;
 		static bool aWasPressed;
 		static bool bWasPressed;
+		static bool l1WasPressed;
 		
 
 		// Controller button states
@@ -245,7 +269,12 @@ void opcontrol() {
 		bool yIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
 		bool bIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_B);
 		bool aIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_A);
+		bool l1IsPressed = controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1);
 
+		// Pneumatics control
+		if (l1IsPressed){
+			Sweeper.toggle();
+		}
 
 		// Intake & Hopper control
 		if(r1IsPressed) {
@@ -253,13 +282,18 @@ void opcontrol() {
 		} else if (r2IsPressed){
 			Intake.move(-127);
 		}
+		else if (upIsPressed){
+			Intake.move(127);
+			Output.move(127);
+		}
 		else{
 			Intake.move(0);
+			Output.move(0);
 		}
 
 
 
-
+		r1WasPressed = r1IsPressed;
 		r2WasPressed = r2IsPressed;
 		downWasPressed = downIsPressed;
 		leftWasPressed = leftIsPressed;
@@ -269,6 +303,7 @@ void opcontrol() {
 		aWasPressed = aIsPressed;
 		xWasPressed = xIsPressed;
 		yWasPressed = yIsPressed;
+		l1WasPressed = l1IsPressed;
 
 
 
