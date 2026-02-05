@@ -2,12 +2,15 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/abstract_motor.hpp"
 #include "pros/adi.hpp"
+#include "pros/ai_vision.hpp"
+#include "pros/distance.hpp"
 #include "pros/misc.h"
 #include "pros/motors.hpp"
+#include "pros/optical.hpp"
 #include "pros/rtos.hpp"
 
 // variable to select autonomous
-int auton = 0; 
+int auton = 1;
 
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
 
@@ -15,8 +18,8 @@ pros::Controller controller(pros::E_CONTROLLER_MASTER);
 pros::MotorGroup Drivebase({1, -2, 3, -7, 5, -6}, pros::MotorGearset::blue); // all drivetrain motors
 pros::MotorGroup leftMotors({1, -2, 3}, pros::MotorGearset::blue); // left motors use 600 RPM cartridges
 pros::MotorGroup rightMotors({-7, 5, -6}, pros::MotorGearset::blue); // right motors use 600 RPM cartridges
-pros::MotorGroup Intake({11}, pros::MotorGearset::blue); // All intake motors
-pros::MotorGroup Output({-10}, pros::MotorGearset::blue); // All output motors
+pros::MotorGroup intake({11}, pros::MotorGearset::blue); // All intake motors
+pros::MotorGroup output({-10}, pros::MotorGearset::blue); // All output motors
 
 pros::Motor l1(1, pros::MotorGearset::blue);
 pros::Motor l2(-2, pros::MotorGearset::blue);
@@ -26,7 +29,11 @@ pros::Motor r2(5, pros::MotorGearset::blue);
 pros::Motor r3(-6, pros::MotorGearset::blue);
 
 // Pneumatics
-pros::adi::Pneumatics Sweeper('a', false);
+pros::adi::Pneumatics wing('a', false);
+
+// Sensors
+pros::Distance topDistance(16);
+pros::Distance bottomDistance(17);
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
@@ -85,7 +92,7 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         lateral_controller, // lateral PID settings
                         angular_controller, // angular PID settings
                         sensors, // odometry sensors
-                        &throttle_curve, 
+                        &throttle_curve,
                         &steer_curve
 );
 
@@ -97,13 +104,13 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
  * "I was pressed!" and nothing.
  */
 void on_center_button() {
-	static bool pressed = false;
-	pressed = !pressed;
-	if (pressed) {
-		pros::lcd::set_text(2, "I was pressed!");
-	} else {
-		pros::lcd::clear_line(2);
-	}
+    static bool pressed = false;
+    pressed = !pressed;
+    if (pressed) {
+        pros::lcd::set_text(2, "I was pressed!");
+    } else {
+        pros::lcd::clear_line(2);
+    }
 }
 
 /**
@@ -123,7 +130,7 @@ void initialize() {
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
             pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
-            // delay to save resources
+			// delay to save resources
             pros::delay(20);
         }
     });
@@ -161,53 +168,94 @@ void competition_initialize() {}
  */
 
 
-ASSET(basicRight_txt); // Pure Pursuit path asset
 ASSET(basicLeft_txt); // Pure Pursuit path asset
-ASSET(movebacktohoopleft_txt); // Pure Pursuit path asset
 
 void autonomous() {
 
-	if (auton == 0){ // start on the right side
-		// Will be coded properly once robot is finished 
-		// Currently this is all previsonary code
-		Sweeper.extend();
-		pros::delay(200);
-		Intake.move(127);
-		Sweeper.retract();
+    if (auton == 0){ // start on the left side
+        pros::delay(200);
+        intake.move(127);
 
 
-   		chassis.setPose(0, 0, 0);
-		chassis.moveToPoint(0, 30, 1000);
-		chassis.turnToHeading(-90, 1000);
-		Sweeper.extend();
+        chassis.setPose(0, 0, 0);
+        chassis.moveToPoint(0, 30, 1000);
+        chassis.turnToHeading(-90, 1000);
+
+        pros::delay(1000);
+        chassis.moveToPoint(0, 34, 1000);
+        chassis.moveToPose(0, 24, -90, 500);
+        output.move(127);
+
+        pros::delay(3000);
+        chassis.moveToPoint(0, 30, 500);
+        chassis.turnToHeading(135, 500);
+        Drivebase.move(100);
+        pros::delay(300);
+        Drivebase.move(0);
+        pros::delay(300);
+        intake.move(-127);
+        pros::delay(2000);
+        intake.move(0);
+        leftMotors.move(-60);
+        pros::delay(200);
+        Drivebase.move(0);
+
+    }
+
+	if (auton == 1){ // start on the right side
+		chassis.setPose(0, 0, 0);
+		intake.move(127);
+		chassis.moveToPoint(0, 16,4000, {.maxSpeed=80});
+		chassis.moveToPoint(0, 36, 4000, {.maxSpeed=40});
+		while (topDistance.get_distance() > 110 || bottomDistance.get_distance() < 110){
+			pros::delay(20);
+		}
 		pros::delay(1000);
-		chassis.moveToPoint(0, 32, 1000);
-		chassis.moveToPoint(0, 28, 500);
-		Output.move(127);
-		Sweeper.retract();
-		pros::delay(3000);
-		Intake.move(0);
-		Output.move(0);
+		intake.move(0);
+		chassis.turnToHeading(-135, 4000, {.maxSpeed=70});
+		chassis.moveToPoint(-30, 10, 4000, {.maxSpeed=60});
+		chassis.turnToHeading(-180, 4000);
+		chassis.moveToPoint(-30, 30, 4000, {.forwards=false, .maxSpeed=60});
+		pros::delay(1500);
+		intake.move(127);
+		output.move(127);
+		while (topDistance.get_distance() < 125 || bottomDistance.get_distance() < 125){
+			pros::delay(20);
+		}
+		pros::delay(2000);
+		intake.move(0);
+		output.move(0);
+		pros::delay(400);
 	}
 
-	// if (auton == 1){ // start on the left side
-	// 	// Will be coded properly once robot is finished 
-	// 	// Currently this is all previsonary code
+	if (auton == 2){ // skills
+		chassis.setPose(0, 0, 0);
+		intake.move(127);
+		while (topDistance.get_distance() > 110 || bottomDistance.get_distance() < 110){
+			pros::delay(20);
+		}
+		intake.move(0);
+	}
 
-	// 	Intake.move(127);
 
-	// 	// set chassis pose
-    // 	chassis.setPose(0, 0, 0);
-    // 	// lookahead distance: 15 inches
-    // 	// timeout: 2000 ms
-    // 	chassis.follow(basicLeft_txt, 15, 1000);
-	// 	Intake.move(0);
-	// 	chassis.follow(movebacktohoopleft_txt, 15, 100);
-	// 	Intake.move(127);
+    // if (auton == 1){ // start on the right side
+    //  // Will be coded properly once robot is finished
+    //  // Currently this is all previsonary code
 
-	// 	pros::delay(3000);	
-	// 	Intake.move(0);
-	// }
+    //  intake.move(127);
+
+    //  // set chassis pose
+    //  chassis.setPose(0, 0, 0);
+    //  // lookahead distance: 15 inches
+    //  // timeout: 2000 ms
+    //  chassis.follow(basicLeft_txt, 15, 1000);
+    //  intake.move(0);
+    //  chassis.follow(movebacktohoopleft_txt, 15, 100);
+    //  intake.move(127);
+
+    //  pros::delay(3000);  
+    //  intake.move(0);
+    // }
 }
 
 /**
@@ -227,7 +275,8 @@ void autonomous() {
 
 
 void opcontrol() {
-	
+
+   
     // loop forever
     while (true) {
         // get left y and right x positions
@@ -235,72 +284,73 @@ void opcontrol() {
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
 
         // move the robot
-		int deadzone = 10;
-		if (abs(leftY) < deadzone) leftY = 0;
-		if (abs(rightX) < deadzone) rightX = 0;
-		chassis.arcade(leftY, -rightX, false, 0.75);
+        int deadzone = 10;
+        if (abs(leftY) < deadzone) leftY = 0;
+        if (abs(rightX) < deadzone) rightX = 0;
+        chassis.arcade(leftY, -rightX, false, 0.75);
 
 
 
-		static bool r1WasPressed;
-		static bool r2WasPressed;
-		static bool upWasPressed;
-		static bool downWasPressed;
-		static bool leftWasPressed;
-		static bool rightWasPressed;
-		static bool xWasPressed;
-		static bool yWasPressed;
-		static bool aWasPressed;
-		static bool bWasPressed;
-		static bool l1WasPressed;
-		
+        static bool r1WasPressed;
+        static bool r2WasPressed;
+        static bool upWasPressed;
+        static bool downWasPressed;
+        static bool leftWasPressed;
+        static bool rightWasPressed;
+        static bool xWasPressed;
+        static bool yWasPressed;
+        static bool aWasPressed;
+        static bool bWasPressed;
+        static bool l1WasPressed;
+       
 
-		// Controller button states
-		bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
-		bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
-		bool upIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
-		bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-		bool leftIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT);
-		bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
-		bool xIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_X);
-		bool yIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
-		bool bIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_B);
-		bool aIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_A);
-		bool l1IsPressed = controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1);
+        // Controller button states
+        bool r1IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
+        bool r2IsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
+        bool upIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
+        bool downIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+        bool leftIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT);
+        bool rightIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
+        bool xIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_X);
+        bool yIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y);
+        bool bIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_B);
+        bool aIsPressed = controller.get_digital(pros::E_CONTROLLER_DIGITAL_A);
+        bool l1IsPressed = controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1);
 
-		// Pneumatics control
-		if (l1IsPressed){
-			Sweeper.toggle();
-		}
+        // Pneumatics control
+        if (l1IsPressed){
+            wing.toggle();
+        }
 
-		// Intake & Hopper control
-		if(r1IsPressed) {
-			Intake.move(127);
-		} else if (r2IsPressed){
-			Intake.move(-127);
-		}
-		else if (upIsPressed){
-			Intake.move(127);
-			Output.move(127);
-		}
-		else{
-			Intake.move(0);
-			Output.move(0);
-		}
+        // intake & Hopper control
+        if(r1IsPressed) {
+            intake.move(127);
+        } else if (r2IsPressed){
+            intake.move(-127);
+        }
+        else if (upIsPressed){
+            intake.move(127);
+            output.move(127);
+        }
+        else{
+            intake.move(0);
+            output.move(0);
+        }
 
 
 
-		r1WasPressed = r1IsPressed;
-		r2WasPressed = r2IsPressed;
-		downWasPressed = downIsPressed;
-		leftWasPressed = leftIsPressed;
-		rightWasPressed = rightIsPressed;
-		upWasPressed = upIsPressed;
-		bWasPressed = bIsPressed;
-		aWasPressed = aIsPressed;
-		xWasPressed = xIsPressed;
-		yWasPressed = yIsPressed;
-		l1WasPressed = l1IsPressed;
+
+        r1WasPressed = r1IsPressed;
+        r2WasPressed = r2IsPressed;
+        downWasPressed = downIsPressed;
+        leftWasPressed = leftIsPressed;
+        rightWasPressed = rightIsPressed;
+        upWasPressed = upIsPressed;
+        bWasPressed = bIsPressed;
+        aWasPressed = aIsPressed;
+        xWasPressed = xIsPressed;
+        yWasPressed = yIsPressed;
+        l1WasPressed = l1IsPressed;
 
 
 
@@ -308,4 +358,3 @@ void opcontrol() {
         pros::delay(25);
     }
 }
-

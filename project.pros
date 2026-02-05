@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "CrisyDrive",
+    "project_name": "CrissyDrive",
     "target": "v5",
     "templates": {
       "LemLib": {
@@ -635,7 +635,7 @@
       }
     },
     "upload_options": {
-      "description": "Vex V5 Project for Crisy robot - 84899F",
+      "description": "Vex V5 Project for Crissy robot - 84899F",
       "icon": "pros"
     },
     "use_early_access": false
