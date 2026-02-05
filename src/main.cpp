@@ -2,11 +2,9 @@
 #include "lemlib/api.hpp" // IWYU pragma: keep
 #include "pros/abstract_motor.hpp"
 #include "pros/adi.hpp"
-#include "pros/ai_vision.hpp"
 #include "pros/distance.hpp"
 #include "pros/misc.h"
 #include "pros/motors.hpp"
-#include "pros/optical.hpp"
 #include "pros/rtos.hpp"
 
 // variable to select autonomous
@@ -34,6 +32,8 @@ pros::adi::Pneumatics wing('a', false);
 // Sensors
 pros::Distance topDistance(16);
 pros::Distance bottomDistance(17);
+pros::Imu imu(18);
+
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
@@ -48,7 +48,7 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
                             nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
                             nullptr, // horizontal tracking wheel 1
                             nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
-                            nullptr // inertial sensor
+							&imu // inertial sensor
 );
 
 // lateral PID controller
@@ -72,7 +72,7 @@ lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in degrees
                                               500, // large error range timeout, in milliseconds
-                                              0 // maximum acceleration (slew)
+                                              20 // maximum acceleration (slew)
 );
 
 // input curve for throttle input during driver control
@@ -122,14 +122,18 @@ void on_center_button() {
 // initialize function. Runs on program startup
 void initialize() {
     pros::lcd::initialize(); // initialize brain screen
-    chassis.calibrate(); // calibrate sensors
-    // print position to brain screen
+    chassis.calibrate(true); // calibrate sensors
+	pros::lcd::print(0, "Calibrating IMU...");
+	while (imu.is_calibrating()){
+		pros::delay(20);
+	}
+    //print position to brain screen
     pros::Task screen_task([&]() {
         while (true) {
             // print robot location to the brain screen
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+            pros::lcd::print(2, "Theta: %f", imu.get_heading()); // heading
 			// delay to save resources
             pros::delay(20);
         }
@@ -206,16 +210,17 @@ void autonomous() {
 		chassis.setPose(0, 0, 0);
 		intake.move(127);
 		chassis.moveToPoint(0, 16,4000, {.maxSpeed=80});
+		wing.extend();
 		chassis.moveToPoint(0, 36, 4000, {.maxSpeed=40});
 		while (topDistance.get_distance() > 110 || bottomDistance.get_distance() < 110){
 			pros::delay(20);
 		}
 		pros::delay(1000);
 		intake.move(0);
-		chassis.turnToHeading(-135, 4000, {.maxSpeed=70});
+		chassis.turnToHeading(-135, 4000, {.maxSpeed=70, .earlyExitRange=0});
 		chassis.moveToPoint(-30, 10, 4000, {.maxSpeed=60});
-		chassis.turnToHeading(-180, 4000);
-		chassis.moveToPoint(-30, 30, 4000, {.forwards=false, .maxSpeed=60});
+		chassis.turnToHeading(-170, 4000, {.earlyExitRange=0});
+		chassis.moveToPoint(-30, 34, 4000, {.forwards=false, .maxSpeed=60});
 		pros::delay(1500);
 		intake.move(127);
 		output.move(127);
@@ -275,10 +280,12 @@ void autonomous() {
 
 
 void opcontrol() {
-
+	wing.extend();
    
     // loop forever
     while (true) {
+		double heading = imu.get_heading();
+		printf("Heading: %f\n", heading);
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
@@ -355,6 +362,6 @@ void opcontrol() {
 
 
         // delay to save resources
-        pros::delay(25);
+        pros::delay(20);
     }
 }
