@@ -5,7 +5,9 @@
 #include "pros/distance.hpp"
 #include "pros/misc.h"
 #include "pros/motors.hpp"
+#include "pros/rotation.hpp"
 #include "pros/rtos.hpp"
+#include <cstdio>
 
 // variable to select autonomous
 int auton = 1;
@@ -32,8 +34,8 @@ pros::adi::Pneumatics wing('a', false);
 // Sensors
 pros::Distance topDistance(16);
 pros::Distance bottomDistance(17);
-pros::Imu imu(18);
-
+pros::Distance middleDistance(15);
+pros::Rotation chainRotation(18);
 
 // drivetrain settings
 lemlib::Drivetrain drivetrain(&leftMotors, // left motor group
@@ -48,7 +50,7 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
                             nullptr, // vertical tracking wheel 2, set to nullptr as we are using IMEs
                             nullptr, // horizontal tracking wheel 1
                             nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
-							&imu // inertial sensor
+                            nullptr // inertial sensor
 );
 
 // lateral PID controller
@@ -72,7 +74,7 @@ lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               100, // small error range timeout, in milliseconds
                                               3, // large error range, in degrees
                                               500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+                                              0 // maximum acceleration (slew)
 );
 
 // input curve for throttle input during driver control
@@ -103,16 +105,38 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
  * When this callback is fired, it will toggle line 2 of the LCD text between
  * "I was pressed!" and nothing.
  */
+void on_left_button() {
+    static bool pressed = false;
+    pressed = !pressed;
+    if (pressed) {
+        auton = 3;
+        pros::lcd::set_text(4, "Auton: 3 - None");
+    } else {
+
+    }
+}
+ 
 void on_center_button() {
     static bool pressed = false;
     pressed = !pressed;
     if (pressed) {
-        pros::lcd::set_text(2, "I was pressed!");
+        auton = 1;
+        pros::lcd::set_text(4, "Auton: 1 - Right");
     } else {
-        pros::lcd::clear_line(2);
+
     }
 }
 
+void on_right_button() {
+    static bool pressed = false;
+    pressed = !pressed;
+    if (pressed) {
+        auton = 2;
+        pros::lcd::set_text(4, "Auton: 2 - Skills");
+    } else {
+
+    }
+}
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -122,20 +146,23 @@ void on_center_button() {
 // initialize function. Runs on program startup
 void initialize() {
     pros::lcd::initialize(); // initialize brain screen
-    chassis.calibrate(true); // calibrate sensors
-	pros::lcd::print(0, "Calibrating IMU...");
-	while (imu.is_calibrating()){
-		pros::delay(20);
-	}
-    //print position to brain screen
+    
+    chassis.calibrate(); // calibrate sensors
+	chainRotation.set_reversed(true);
+	chainRotation.reset_position();
+    pros::lcd::print(4, "Auton: %d", auton);
+    // print position to brain screen
     pros::Task screen_task([&]() {
         while (true) {
             // print robot location to the brain screen
             pros::lcd::print(0, "X: %f", chassis.getPose().x); // x
             pros::lcd::print(1, "Y: %f", chassis.getPose().y); // y
-            pros::lcd::print(2, "Theta: %f", imu.get_heading()); // heading
+            pros::lcd::print(2, "Theta: %f", chassis.getPose().theta); // heading
+			pros::lcd::print(3, "Chain Position: %d", chainRotation.get_position()/100); // chain position
+			// pros::lcd::print(4, "Auton: %d", auton); // auton selection
+            printf("Position: %d Ticks \n", chainRotation.get_position());
 			// delay to save resources
-            pros::delay(20);
+            pros::delay(100);
         }
     });
 }
@@ -157,7 +184,12 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-void competition_initialize() {}
+void competition_initialize() {
+    // Register button callbacks for autonomous selection
+    pros::lcd::register_btn0_cb(on_left_button);
+    pros::lcd::register_btn1_cb(on_center_button);
+    pros::lcd::register_btn2_cb(on_right_button);
+}
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -175,6 +207,7 @@ void competition_initialize() {}
 ASSET(basicLeft_txt); // Pure Pursuit path asset
 
 void autonomous() {
+    chainRotation.reset_position();
 
     if (auton == 0){ // start on the left side
         pros::delay(200);
@@ -206,41 +239,40 @@ void autonomous() {
 
     }
 
-	if (auton == 1){ // start on the right side
-		chassis.setPose(0, 0, 0);
-		intake.move(127);
-		chassis.moveToPoint(0, 16,4000, {.maxSpeed=80});
-		wing.extend();
-		chassis.moveToPoint(0, 36, 4000, {.maxSpeed=40});
-		while (topDistance.get_distance() > 110 || bottomDistance.get_distance() < 110){
-			pros::delay(20);
+		if (auton == 1){ // start on the right side
+            chainRotation.reset_position();
+            chainRotation.reset();
+			chassis.setPose(0, 0, 0);
+			intake.move(127);
+            pros::delay(1000);
+			chassis.moveToPoint(0, 16,4000, {.maxSpeed=80});
+			wing.extend();
+			chassis.moveToPoint(0, 36, 4000, {.maxSpeed=40});
+			while (topDistance.get_distance() > 110 || bottomDistance.get_distance() < 110 || middleDistance.get_distance() > 110 || chainRotation.get_position() < 8000 ){
+                pros::delay(100);
+			}
+			intake.move(0);
+			chassis.turnToHeading(-135, 4000, {.maxSpeed=70});
+			chassis.moveToPoint(-28, 10, 4000, {.maxSpeed=60});
+			chassis.turnToHeading(-180, 4000);
+			chassis.moveToPoint(-28, 32, 4000, {.forwards=false, .maxSpeed=60});
+			pros::delay(1500);
+			intake.move(127);
+			output.move(127);
 		}
-		pros::delay(1000);
-		intake.move(0);
-		chassis.turnToHeading(-135, 4000, {.maxSpeed=70, .earlyExitRange=0});
-		chassis.moveToPoint(-30, 10, 4000, {.maxSpeed=60});
-		chassis.turnToHeading(-170, 4000, {.earlyExitRange=0});
-		chassis.moveToPoint(-30, 34, 4000, {.forwards=false, .maxSpeed=60});
-		pros::delay(1500);
-		intake.move(127);
-		output.move(127);
-		while (topDistance.get_distance() < 125 || bottomDistance.get_distance() < 125){
-			pros::delay(20);
-		}
-		pros::delay(2000);
-		intake.move(0);
-		output.move(0);
-		pros::delay(400);
-	}
 
-	if (auton == 2){ // skills
-		chassis.setPose(0, 0, 0);
-		intake.move(127);
-		while (topDistance.get_distance() > 110 || bottomDistance.get_distance() < 110){
-			pros::delay(20);
-		}
-		intake.move(0);
-	}
+		if (auton == 2){ // skills
+			chassis.setPose(0, 0, 0);
+            chassis.moveToPoint(0, 10, 2000, {.maxSpeed=80});
+            chassis.moveToPoint(0, -30, 4000, {.forwards=false});
+			pros::delay(1000);
+	    }
+
+    if(auton == 3){ // none
+        intake.move(127);
+        pros::delay(3000);
+        intake.move(0);
+    }
 
 
     // if (auton == 1){ // start on the right side
@@ -280,12 +312,11 @@ void autonomous() {
 
 
 void opcontrol() {
+    chainRotation.reset_position();
 	wing.extend();
    
     // loop forever
     while (true) {
-		double heading = imu.get_heading();
-		printf("Heading: %f\n", heading);
         // get left y and right x positions
         int leftY = controller.get_analog(pros::E_CONTROLLER_ANALOG_LEFT_Y);
         int rightX = controller.get_analog(pros::E_CONTROLLER_ANALOG_RIGHT_X);
@@ -294,6 +325,7 @@ void opcontrol() {
         int deadzone = 10;
         if (abs(leftY) < deadzone) leftY = 0;
         if (abs(rightX) < deadzone) rightX = 0;
+        rightX = rightX*0.8;
         chassis.arcade(leftY, -rightX, false, 0.75);
 
 
@@ -332,12 +364,24 @@ void opcontrol() {
         // intake & Hopper control
         if(r1IsPressed) {
             intake.move(127);
+            if (upIsPressed){
+                output.move(127);
+			}
         } else if (r2IsPressed){
             intake.move(-127);
+            if (downIsPressed){
+                output.move(-127);
+        }
         }
         else if (upIsPressed){
             intake.move(127);
             output.move(127);
+        }
+        else if (downIsPressed){
+            output.move(-127);
+            if (r2IsPressed){
+                intake.move(-127);
+        }
         }
         else{
             intake.move(0);
@@ -362,6 +406,6 @@ void opcontrol() {
 
 
         // delay to save resources
-        pros::delay(20);
+        pros::delay(25);
     }
 }
